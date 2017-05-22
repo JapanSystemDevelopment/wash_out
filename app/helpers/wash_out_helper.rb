@@ -1,16 +1,28 @@
 module WashOutHelper
 
   def wsdl_data_options(param)
+    result = {}
+
     case controller.soap_config.wsdl_style
     when 'rpc'
-      if param.map.present? || !param.value.nil?
-        { :"xsi:type" => param.namespaced_type }
+      if param.map.present? || param.value
+
+        if param.source_class
+          result['n2:arrayType'] = "n1:#{param.source_class::STRUCT}[#{param.map.first.map.count}]"
+          result['xmlns:n2'] = 'http://schemas.xmlsoap.org/soap/encoding/'
+        end
+
+        result.delete('xsi:type')
+        result['xsi:type'] = param.namespaced_type unless param.namespaced_type.blank?
+
       else
-        { :"xsi:nil" => true }
+        result['xsi:nil'] = true
       end
     when 'document'
-      { }
+      # { }
     end
+
+    result
   end
 
   def wsdl_data_attrs(param)
@@ -76,15 +88,17 @@ module WashOutHelper
           end
 
           if elems.any?
-            xml.tag! "xsd:sequence" do
+            xml.tag! 'xsd:complexContent' do
               elems.each do |value|
-                xml.tag! "xsd:element", wsdl_occurence(value, false, :name => value.name, :type => value.namespaced_type)
+                xml.tag! 'xsd:restriction',
+                         wsdl_occurence(value, false, name: value.name, type: value.namespaced_type)
               end
             end
           end
 
           attrs.each do |value|
-            xml.tag! "xsd:attribute", wsdl_occurence(value, false, :name => value.attr_name, :type => value.namespaced_type)
+            xml.tag! 'xsd:attribute',
+                     wsdl_occurence(value, false, name: value.attr_name, type: value.namespaced_type)
           end
         end
 

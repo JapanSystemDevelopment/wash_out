@@ -83,7 +83,7 @@ module WashOut
     # Render a SOAP response.
     def _render_soap(result, options)
       @namespace   = soap_config.namespace
-      @operation   = soap_action = request.env['wash_out.soap_action']
+      @operation   = soap_action # = request.env['wash_out.soap_action']
       @action_spec = self.class.soap_actions[soap_action]
 
       result = { 'value' => result } unless result.is_a? Hash
@@ -119,7 +119,9 @@ module WashOut
 
             # Inline array of complex structures    {:foo => [{bar: ...}]}
             elsif param.struct? && param.multiplied
-              result_spec[i].map = value.map{|e| inject.call(e, param.map)}
+              result_spec[i].map = value.map do |e|
+                inject.call(e, param.map)
+              end
 
             # Inline scalar                         {:foo => :string}
             else
@@ -245,7 +247,8 @@ module WashOut
     end
 
     def soap_action
-      request.env['wash_out.soap_action']
+      return unless request.env['wash_out.soap_action']
+      request.env['wash_out.soap_action'][/^\/server\/api\/(.*)/, 1]
     end
 
     def xml_data

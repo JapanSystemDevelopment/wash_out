@@ -1,5 +1,5 @@
 module WashOut
-  class Type
+  class Type < Hash
 
     def self.type_name(value)
       @param_type_name = value.to_s

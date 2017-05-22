@@ -109,6 +109,10 @@ module WashOut
 
       soap_action = parse_soap_action(env)
 
+      if controller.soap_config.namespace == 'urn:ActionWebService'
+        soap_action = soap_action[/^\/server\/api\/(.*)/, 1]
+      end
+
       action = if soap_action.blank?
         '_invalid_request'
       else
